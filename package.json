@@ -1,0 +1,14 @@
+{
+  "name": "xldriv-stats-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "XLDriv Operations & Fleet Dashboard",
+  "scripts": {
+    "build": "rm -rf dist && mkdir -p dist && cp \"XLDriv Operations Dashboard.html\" dist/index.html && cp \"XLDriv Operations Dashboard.html\" \"dist/XLDriv Operations Dashboard.html\"",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
+}
