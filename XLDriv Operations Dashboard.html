@@ -595,6 +595,19 @@
       display: flex;
     }
 
+    body.auth-locked .container {
+      display: none;
+    }
+
+    body.auth-locked .modal-backdrop {
+      background: var(--bg);
+      border-top: 3px solid var(--brand);
+    }
+
+    body.auth-locked #authCancelBtn {
+      display: none;
+    }
+
     .modal {
       background: var(--surface);
       border-radius: var(--radius-md);
@@ -933,7 +946,7 @@
     }
   </style>
 </head>
-<body>
+<body class="auth-locked">
   <div class="container">
 
     <!-- Minimal Utility & Trust Topbar -->
@@ -1153,16 +1166,20 @@
     </footer>
   </div>
 
-  <!-- Authentication Modal (used when connected to backend API) -->
+  <!-- Authentication Modal -->
   <div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
     <div class="modal">
+      <div class="brand-mark" style="margin-bottom:14px;">
+        <span class="brand-icon">XL</span>
+        <span>XLDRIV</span>
+      </div>
       <h2 id="authModalTitle">Sign in to XLDriv Ops</h2>
-      <p>Authenticate with your operations account to load live records and export audit CSVs.</p>
+      <p>Authenticate with your operations account to view the dashboard and export audit CSVs.</p>
       <div class="error-text" id="authError"></div>
       <form id="authForm">
         <div class="form-field">
           <label for="authEmail">Work Email</label>
-          <input type="email" id="authEmail" required autocomplete="username" placeholder="ops@xldriv.com">
+          <input type="email" id="authEmail" required autocomplete="username" placeholder="stats@xldriv.com">
         </div>
         <div class="form-field">
           <label for="authPassword">Password</label>
@@ -1658,6 +1675,81 @@
           `Last synced: ${formatSyncTimestamp(state.meta.generatedAt)}`;
       }
 
+      const AUTH_STORAGE_KEY = "xldriv_ops_session";
+      const ALLOWED_EMAIL = "stats@xldriv.com";
+      const EXPECTED_PASSWORD_HASH = "349cf103e66e178e18908851ecc6c9f3cf2399ca34d5404318105a9eb06d3070";
+
+      async function sha256Hex(message) {
+        if (window.crypto && window.crypto.subtle) {
+          const bytes = new TextEncoder().encode(message);
+          const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+          return Array.from(new Uint8Array(digest))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+        }
+
+        // Pure-JS SHA-256 fallback for non-secure contexts (e.g. file://)
+        const k = [
+          0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+          0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+          0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+          0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+          0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+          0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+          0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+          0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        ];
+        const hash = [
+          0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+          0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        ];
+        const utf8 = unescape(encodeURIComponent(message));
+        const words = [];
+        for (let i = 0; i < utf8.length; i++) {
+          words[i >> 2] |= utf8.charCodeAt(i) << (24 - (i % 4) * 8);
+        }
+        const bitLen = utf8.length * 8;
+        words[bitLen >> 5] |= 0x80 << (24 - (bitLen % 32));
+        words[(((bitLen + 64) >> 9) << 4) + 15] = bitLen;
+
+        const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+        const w = new Array(64);
+        for (let i = 0; i < words.length; i += 16) {
+          let [a, b, c, d, e, f, g, h] = hash;
+          for (let j = 0; j < 64; j++) {
+            if (j < 16) {
+              w[j] = words[i + j] | 0;
+            } else {
+              const s0 = rotr(w[j - 15], 7) ^ rotr(w[j - 15], 18) ^ (w[j - 15] >>> 3);
+              const s1 = rotr(w[j - 2], 17) ^ rotr(w[j - 2], 19) ^ (w[j - 2] >>> 10);
+              w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+            }
+            const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+            const ch = (e & f) ^ (~e & g);
+            const temp1 = (h + S1 + ch + k[j] + w[j]) | 0;
+            const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+            const maj = (a & b) ^ (a & c) ^ (b & c);
+            const temp2 = (S0 + maj) | 0;
+            h = g; g = f; f = e; e = (d + temp1) | 0;
+            d = c; c = b; b = a; a = (temp1 + temp2) | 0;
+          }
+          hash[0] = (hash[0] + a) | 0; hash[1] = (hash[1] + b) | 0;
+          hash[2] = (hash[2] + c) | 0; hash[3] = (hash[3] + d) | 0;
+          hash[4] = (hash[4] + e) | 0; hash[5] = (hash[5] + f) | 0;
+          hash[6] = (hash[6] + g) | 0; hash[7] = (hash[7] + h) | 0;
+        }
+        return hash.map((v) => (v >>> 0).toString(16).padStart(8, "0")).join("");
+      }
+
+      function getStoredSessionUser() {
+        try {
+          const email = sessionStorage.getItem(AUTH_STORAGE_KEY);
+          return email === ALLOWED_EMAIL ? { email, role: "Operations" } : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
       function openAuthModal() {
         const errEl = document.getElementById("authError");
         errEl.textContent = "";
@@ -1667,6 +1759,7 @@
       }
 
       function closeAuthModal() {
+        if (document.body.classList.contains("auth-locked")) return;
         document.getElementById("authModal").classList.remove("open");
       }
 
@@ -1678,18 +1771,15 @@
 
         refreshBtn.style.display = isFileProtocol ? "none" : "inline-flex";
 
-        if (state.mode === "live" && state.user) {
+        if (state.user) {
           userBadge.style.display = "inline";
           userBadge.textContent = `${state.user.email} (${state.user.role})`;
           authBtn.style.display = "inline-flex";
           authBtn.textContent = "Sign Out";
-        } else if (state.mode === "live") {
+        } else {
           userBadge.style.display = "none";
           authBtn.style.display = "inline-flex";
           authBtn.textContent = "Sign In";
-        } else {
-          userBadge.style.display = "none";
-          authBtn.style.display = "none";
         }
       }
 
@@ -1700,55 +1790,63 @@
         refreshBtn.disabled = true;
 
         try {
-          if (window.location.protocol === "file:") {
-            state.mode = "snapshot";
-            updateConnectionUI();
-            applyDashboardData(SNAPSHOT_DATA);
-            return;
-          }
+          if (window.location.protocol !== "file:") {
+            try {
+              const meRes = await fetch("/api/auth/me", { credentials: "same-origin" });
+              if (meRes.ok) {
+                const meData = await meRes.json();
+                if (meData && meData.user && meData.user.email) {
+                  state.mode = "live";
+                  state.user = meData.user;
 
-          try {
-            const meRes = await fetch("/api/auth/me", { credentials: "same-origin" });
-            if (meRes.ok) {
-              const meData = await meRes.json();
-              if (meData && meData.user && meData.user.email) {
-                state.mode = "live";
-                state.user = meData.user;
+                  const [summaryRes, ridesRes] = await Promise.all([
+                    fetch("/api/dashboard/summary", { credentials: "same-origin" }),
+                    fetch("/api/dashboard/rides?limit=100", { credentials: "same-origin" })
+                  ]);
 
-                const [summaryRes, ridesRes] = await Promise.all([
-                  fetch("/api/dashboard/summary", { credentials: "same-origin" }),
-                  fetch("/api/dashboard/rides?limit=100", { credentials: "same-origin" })
-                ]);
-
-                if (summaryRes.ok && ridesRes.ok) {
-                  const summary = await summaryRes.json();
-                  const ridesPayload = await ridesRes.json();
-                  applyDashboardData({
-                    meta: summary.meta,
-                    regions: summary.regions,
-                    verificationQueue: summary.verificationQueue,
-                    cancellationReasons: summary.cancellationReasons,
-                    rides: ridesPayload.rides
-                  });
-                  updateConnectionUI();
-                  return;
+                  if (summaryRes.ok && ridesRes.ok) {
+                    const summary = await summaryRes.json();
+                    const ridesPayload = await ridesRes.json();
+                    document.body.classList.remove("auth-locked");
+                    closeAuthModal();
+                    applyDashboardData({
+                      meta: summary.meta,
+                      regions: summary.regions,
+                      verificationQueue: summary.verificationQueue,
+                      cancellationReasons: summary.cancellationReasons,
+                      rides: ridesPayload.rides
+                    });
+                    updateConnectionUI();
+                    return;
+                  }
                 }
+              } else if (meRes.status === 401) {
+                state.mode = "live";
+                state.user = null;
+                document.body.classList.add("auth-locked");
+                updateConnectionUI();
+                openAuthModal();
+                return;
               }
-            } else if (meRes.status === 401) {
-              state.mode = "live";
-              state.user = null;
-              updateConnectionUI();
-              openAuthModal();
-              return;
+            } catch (_) {
+              // Backend not running; fall back to local snapshot auth gate
             }
-          } catch (_) {
-            // Backend not running; fall back cleanly to local snapshot
           }
 
           state.mode = "snapshot";
-          state.user = null;
-          updateConnectionUI();
-          applyDashboardData(SNAPSHOT_DATA);
+          const sessionUser = getStoredSessionUser();
+          if (sessionUser) {
+            state.user = sessionUser;
+            document.body.classList.remove("auth-locked");
+            closeAuthModal();
+            updateConnectionUI();
+            applyDashboardData(SNAPSHOT_DATA);
+          } else {
+            state.user = null;
+            document.body.classList.add("auth-locked");
+            updateConnectionUI();
+            openAuthModal();
+          }
         } finally {
           state.isLoading = false;
           refreshBtn.disabled = false;
@@ -1811,11 +1909,17 @@
       document.getElementById("authBtn").addEventListener("click", async () => {
         if (state.user) {
           try {
-            await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
-          } catch (_) {
-            // Clear local session state even if network call fails
+            sessionStorage.removeItem(AUTH_STORAGE_KEY);
+          } catch (_) {}
+          if (state.mode === "live") {
+            try {
+              await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+            } catch (_) {
+              // Clear local session state even if network call fails
+            }
           }
           state.user = null;
+          document.body.classList.add("auth-locked");
           updateConnectionUI();
           openAuthModal();
         } else {
@@ -1848,26 +1952,48 @@
 
         if (submitBtn) submitBtn.disabled = true;
         try {
-          const res = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "same-origin",
-            body: JSON.stringify({ email, password })
-          });
+          if (window.location.protocol !== "file:" && state.mode === "live") {
+            try {
+              const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({ email, password })
+              });
 
-          if (!res.ok) {
-            const payload = await res.json().catch(() => ({}));
-            errEl.textContent = payload.error || "Invalid credentials.";
-            errEl.style.display = "block";
-            return;
+              if (res.ok) {
+                document.getElementById("authPassword").value = "";
+                document.body.classList.remove("auth-locked");
+                closeAuthModal();
+                await loadFromBackendOrFallback();
+                return;
+              }
+              if (res.status !== 404 && res.status !== 405) {
+                const payload = await res.json().catch(() => ({}));
+                errEl.textContent = payload.error || "Invalid credentials.";
+                errEl.style.display = "block";
+                return;
+              }
+            } catch (_) {
+              // Fall through to local credential verification when backend is unavailable
+            }
           }
 
-          document.getElementById("authPassword").value = "";
-          closeAuthModal();
-          await loadFromBackendOrFallback();
-        } catch {
-          errEl.textContent = "Unable to reach authentication server.";
-          errEl.style.display = "block";
+          const passwordHash = await sha256Hex(password);
+          if (email.toLowerCase() === ALLOWED_EMAIL && passwordHash === EXPECTED_PASSWORD_HASH) {
+            try {
+              sessionStorage.setItem(AUTH_STORAGE_KEY, ALLOWED_EMAIL);
+            } catch (_) {}
+            state.user = { email: ALLOWED_EMAIL, role: "Operations" };
+            document.getElementById("authPassword").value = "";
+            document.body.classList.remove("auth-locked");
+            closeAuthModal();
+            updateConnectionUI();
+            applyDashboardData(SNAPSHOT_DATA);
+          } else {
+            errEl.textContent = "Invalid email or password.";
+            errEl.style.display = "block";
+          }
         } finally {
           if (submitBtn) submitBtn.disabled = false;
         }
