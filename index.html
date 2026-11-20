@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#F7B401">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self';">
+  <title>XLDriv Operations &amp; Fleet Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23F7B401'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Arial,sans-serif' font-size='14' font-weight='700' fill='%230F131A'%3EXL%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --brand: #F7B401;
+      --brand-hover: #E5A600;
+      --ink: #0F131A;
+      --ink-secondary: #374151;
+      --muted: #6B7280;
+      --bg: #FAFAFA;
+      --surface: #FFFFFF;
+      --surface-subtle: #F4F5F7;
+      --line: #E5E7EB;
+      --line-strong: #D1D5DB;
+
+      /* Muted institutional status tones (no neon) */
+      --status-green: #15803D;
+      --status-red: #B91C1C;
+      --status-amber: #B45309;
+      --status-neutral: #6B7280;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      overflow-x: clip;
+    }
+
+    body {
+      margin: 0;
+      border-top: 3px solid var(--brand);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.5;
+      overflow-x: clip;
+    }
+
+    h1, h2, h3, .brand-font, .value {
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    .tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 28px 24px 48px;
+    }
+
+    /* Minimal Utility Topbar */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    .brand-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      background: var(--brand);
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0;
+      flex-shrink: 0;
+    }
+
+    .topbar-divider {
+      color: var(--line-strong);
+      user-select: none;
+    }
+
+    .topbar-brief {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+    }
+
+    .user-badge {
+      display: none;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    /* Flat Editorial Header */
+    header {
+      background: transparent;
+      padding: 0 0 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+    }
+
+    .header-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--ink-secondary);
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    .header-right {
+      text-align: right;
+      font-size: 12px;
+      line-height: 1.75;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .header-right strong {
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 12.5px;
+      letter-spacing: 0.03em;
+    }
+
+    /* Sections */
+    .section {
+      margin-top: 32px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--ink);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 12.5px;
+      margin: 3px 0 0;
+    }
+
+    /* KPI Grid */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+
+    .card h3 {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .value {
+      font-size: 30px;
+      font-weight: 700;
+      margin-top: 10px;
+      color: var(--ink);
+      line-height: 1.15;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Tables */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    .regional-table {
+      min-width: 820px;
+    }
+
+    th {
+      background: var(--surface-subtle);
+      color: #4B5563;
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--line);
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #F1F3F5;
+      font-size: 13px;
+      line-height: 1.45;
+      vertical-align: middle;
+      color: var(--ink);
+      background: var(--surface);
+    }
+
+    tbody tr:hover td {
+      background: var(--bg);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tfoot td {
+      background: var(--surface-subtle);
+      font-weight: 600;
+      border-top: 1.5px solid var(--ink);
+      border-bottom: none;
+      color: var(--ink);
+    }
+
+    th.num,
+    td.num,
+    th.money,
+    td.money {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    td.money {
+      font-weight: 500;
+    }
+
+    tfoot td.money {
+      font-weight: 600;
+    }
+
+    td[colspan] {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px 14px;
+    }
+
+    .mobile-scroll-hint {
+      display: none;
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* Flat Status Badges with Muted Indicator Dot */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      background: var(--surface);
+      color: #111827;
+      border: 1px solid var(--line);
+    }
+
+    .badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .badge.completed::before {
+      background: var(--status-green);
+    }
+
+    .badge.cancelled::before {
+      background: var(--status-red);
+    }
+
+    .badge.pending::before {
+      background: var(--status-amber);
+    }
+
+    /* Controls & Inputs */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    select, input {
+      padding: 8px 12px;
+      min-height: 38px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 13px;
+      transition: border-color 0.15s ease;
+    }
+
+    select:focus-visible,
+    input:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 1px;
+    }
+
+    input[type="search"] {
+      min-width: 240px;
+      flex: 1;
+      max-width: 340px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      min-height: 38px;
+      background: var(--brand);
+      color: var(--ink);
+      border: 1px solid var(--brand);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 12.5px;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: var(--brand-hover);
+      border-color: var(--brand-hover);
+    }
+
+    button.secondary {
+      background: var(--surface);
+      color: var(--ink-secondary);
+      border: 1px solid var(--line-strong);
+    }
+
+    button.secondary:hover {
+      background: var(--surface-subtle);
+      color: var(--ink);
+      border-color: var(--line-strong);
+    }
+
+    button.dark-btn {
+      background: var(--ink);
+      color: #FFFFFF;
+      border: 1px solid var(--ink);
+    }
+
+    button.dark-btn:hover {
+      background: #1F2937;
+      border-color: #1F2937;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* Table Footer & Pagination */
+    .table-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--surface-subtle);
+      border-top: 1px solid var(--line);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .note {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--ink);
+      color: var(--ink-secondary);
+      padding: 13px 16px;
+      border-radius: var(--radius-sm);
+      margin-top: 12px;
+      font-size: 12.5px;
+      line-height: 1.6;
+    }
+
+    .note strong {
+      color: var(--ink);
+    }
+
+    .actions {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--ink-secondary);
+    }
+
+    .actions strong {
+      color: var(--ink);
+    }
+
+    .actions p {
+      margin: 0 0 10px;
+    }
+
+    .actions p:last-child {
+      margin-bottom: 0;
+    }
+
+    .two-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+    }
+
+    .chart-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 16px;
+      color: var(--ink);
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 145px 1fr 48px;
+      gap: 12px;
+      align-items: center;
+      margin: 14px 0;
+      font-size: 12.5px;
+      color: var(--ink-secondary);
+    }
+
+    .bar-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .bar-row strong {
+      text-align: right;
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .track {
+      height: 6px;
+      background: #ECEEF2;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      background: var(--brand);
+      border-radius: 999px;
+    }
+
+    .fill.charcoal {
+      background: var(--ink-secondary);
+    }
+
+    /* Auth Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 19, 26, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      width: 100%;
+      max-width: 390px;
+      padding: 24px;
+      box-shadow: 0 12px 32px rgba(15, 19, 26, 0.14);
+    }
+
+    .modal h2 {
+      margin: 0 0 6px;
+      font-size: 19px;
+      color: var(--ink);
+    }
+
+    .modal p {
+      margin: 0 0 18px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .form-field {
+      margin-bottom: 14px;
+    }
+
+    .form-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+
+    .form-field input {
+      width: 100%;
+    }
+
+    .error-text {
+      color: var(--status-red);
+      font-size: 12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    footer {
+      padding: 24px 0 4px;
+      color: var(--muted);
+      font-size: 11.5px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+      margin-top: 36px;
+    }
+
+    /* Tablet */
+    @media (max-width: 900px) {
+      .kpis {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .two-columns {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header-right {
+        text-align: left;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      .container {
+        padding: 16px 14px 36px;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .topbar-right {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 8px;
+      }
+
+      #lastSynced {
+        display: none;
+      }
+
+      header h1 {
+        font-size: 22px;
+      }
+
+      .kpis {
+        gap: 10px;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .value {
+        font-size: 24px;
+      }
+
+      select,
+      input,
+      button {
+        min-height: 40px;
+        font-size: 14px;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .controls select,
+      .controls button {
+        min-width: 0;
+        width: 100%;
+        font-size: 13px;
+        padding: 8px 10px;
+      }
+
+      #searchInput {
+        grid-column: 1 / -1;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+      }
+
+      .mobile-scroll-hint {
+        display: block;
+      }
+
+      /* Sticky first column for 9-column regional financial table */
+      .regional-table th:first-child,
+      .regional-table td:first-child:not([colspan]) {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        border-right: 1px solid var(--line);
+      }
+
+      .regional-table thead th:first-child,
+      .regional-table tfoot td:first-child:not([colspan]) {
+        background: var(--surface-subtle);
+      }
+
+      .regional-table tbody td:first-child:not([colspan]) {
+        background: var(--surface);
+      }
+
+      .regional-table tbody tr:hover td:first-child:not([colspan]) {
+        background: var(--bg);
+      }
+
+      /* Card layout for Fleet Breakdown & Ride Audit tables on mobile */
+      table.responsive-cards {
+        min-width: 0;
+      }
+
+      table.responsive-cards thead {
+        display: none;
+      }
+
+      table.responsive-cards tbody,
+      table.responsive-cards tfoot {
+        display: block;
+      }
+
+      table.responsive-cards tr {
+        display: block;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+      }
+
+      table.responsive-cards tbody tr:last-child {
+        border-bottom: none;
+      }
+
+      table.responsive-cards tfoot tr {
+        background: var(--surface-subtle);
+        border-top: 1.5px solid var(--ink);
+        border-bottom: none;
+      }
+
+      table.responsive-cards td {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 5px 0;
+        border: none;
+        background: transparent !important;
+        text-align: right;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        font-size: 12.5px;
+      }
+
+      table.responsive-cards td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-weight: 500;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        flex-shrink: 0;
+        text-align: left;
+      }
+
+      table.responsive-cards td[colspan] {
+        justify-content: center;
+        text-align: center;
+        padding: 14px 4px;
+        color: var(--muted);
+      }
+
+      table.responsive-cards td[colspan]::before {
+        display: none;
+      }
+
+      .table-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .pagination {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      footer {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .bar-row {
+        grid-template-columns: 1fr auto;
+        row-gap: 6px;
+        column-gap: 10px;
+      }
+
+      .bar-row .track {
+        grid-column: 1 / -1;
+        order: 3;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        border-top: none;
+        background: #FFFFFF;
+      }
+
+      .controls,
+      .no-print,
+      .topbar,
+      .mobile-scroll-hint {
+        display: none !important;
+      }
+
+      .container {
+        max-width: none;
+        padding: 0;
+      }
+
+      .panel,
+      .table-wrap {
+        overflow: visible;
+      }
+
+      table,
+      .regional-table {
+        min-width: 0;
+        width: 100%;
+      }
+
+      th,
+      td {
+        padding: 6px 8px;
+        font-size: 10px;
+      }
+
+      th {
+        white-space: normal;
+      }
+
+      thead {
+        display: table-header-group;
+      }
+
+      tfoot {
+        display: table-row-group;
+      }
+
+      .section-head {
+        break-after: avoid;
+      }
+
+      .card,
+      .chart-card,
+      .note,
+      .actions,
+      tr {
+        break-inside: avoid;
+      }
+
+      .fill,
+      .track,
+      .badge::before {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Minimal Utility & Trust Topbar -->
+    <div class="topbar no-print">
+      <div class="topbar-left">
+        <span class="brand-mark">
+          <span class="brand-icon">XL</span>
+          <span>XLDRIV</span>
+        </span>
+        <span class="topbar-divider" aria-hidden="true">/</span>
+        <span class="topbar-brief">Investor &amp; Operations Brief</span>
+      </div>
+      <div class="topbar-right">
+        <span id="lastSynced">Last synced: —</span>
+        <span class="user-badge" id="userBadge"></span>
+        <button type="button" class="secondary" id="printBtn">Print / PDF</button>
+        <button type="button" class="secondary" id="refreshBtn">Refresh</button>
+        <button type="button" class="dark-btn" id="authBtn" style="display:none;">Sign In</button>
+      </div>
+    </div>
+
+    <header>
+      <div>
+        <div class="header-eyebrow">Operations &amp; Fleet Report</div>
+        <h1>XLDriv Operations &amp; Fleet Dashboard</h1>
+        <p id="headerMeta">
+          Reporting Period: May 25, 2026 – November 18, 2026 · Lagos, Abuja (FCT), Rivers, Edo, Imo &amp; Kaduna
+        </p>
+      </div>
+      <div class="header-right">
+        <strong>XLDRIV LIMITED</strong><br>
+        Fleet &amp; Operations Overview<br>
+        <span id="cutoffLabel">Reporting Cut-off: November 18, 2026</span>
+      </div>
+    </header>
+
+    <!-- SECTION 1 -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">1. Executive KPI Summary</h2>
+          <p class="subtitle">Fleet and ride performance aggregated across all six active regions.</p>
+        </div>
+      </div>
+
+      <div class="kpis" id="kpiGrid">
+        <div class="card">
+          <h3>Total Registered Drivers</h3>
+          <div class="value tabular" id="kpiTotalDrivers">—</div>
+          <div class="small" id="kpiTotalDriversSub">100% of registered fleet</div>
+        </div>
+        <div class="card">
+          <h3>Active Drivers</h3>
+          <div class="value tabular" id="kpiActiveDrivers">—</div>
+          <div class="small" id="kpiActiveDriversSub">—</div>
+        </div>
+        <div class="card">
+          <h3>Completed Rides</h3>
+          <div class="value tabular" id="kpiCompletedRides">—</div>
+          <div class="small" id="kpiCompletedRidesSub">—</div>
+        </div>
+        <div class="card">
+          <h3>Cancelled Rides</h3>
+          <div class="value tabular" id="kpiCancelledRides">—</div>
+          <div class="small" id="kpiCancelledRidesSub">—</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">2. Fleet &amp; Driver Status Breakdown</h2>
+          <p class="subtitle" id="fleetSubtitle">Total registered drivers: —</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="responsive-cards">
+            <thead>
+              <tr>
+                <th>Driver Category</th>
+                <th class="num">Driver Count</th>
+                <th class="num">Share of Fleet</th>
+                <th>Operational Status &amp; Details</th>
+              </tr>
+            </thead>
+            <tbody id="fleetBody"></tbody>
+            <tfoot id="fleetFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">3. State-by-State Driver Distribution &amp; Revenue Metrics</h2>
+          <p class="subtitle">Driver statistics, ride activity, gross trip value and actual subscription income received.</p>
+        </div>
+      </div>
+
+      <div class="mobile-scroll-hint no-print">Swipe horizontally to view all columns</div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="regional-table">
+            <thead>
+              <tr>
+                <th>State / Region</th>
+                <th class="num">Total Drivers</th>
+                <th class="num">Active</th>
+                <th class="num">Inactive</th>
+                <th class="num">Unverified</th>
+                <th class="num">Completed Rides</th>
+                <th class="num">Cancelled Rides</th>
+                <th class="money">Gross Trip Value (NGN)</th>
+                <th class="money">Subscription Revenue (NGN)</th>
+              </tr>
+            </thead>
+            <tbody id="regionalBody"></tbody>
+            <tfoot id="regionalFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>Financial Reporting Note:</strong>
+        Gross Trip Value represents the recorded value of rides. Driver Subscription Revenue Received represents payments actually received by XLDriv. Since driver subscriptions were suspended, the total actual subscription revenue is <strong class="tabular" id="subscriptionNoteAmount">₦0.00</strong>.
+      </div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">4. Ride Request Audit Feed</h2>
+          <p class="subtitle" id="rideFeedSubtitle">Filterable ride records with CSV export respecting active filters.</p>
+        </div>
+      </div>
+
+      <div class="controls no-print">
+        <select id="stateFilter" aria-label="Filter by state or region">
+          <option value="ALL">All States / Regions</option>
+        </select>
+
+        <select id="statusFilter" aria-label="Filter by ride status">
+          <option value="ALL">All Ride Statuses</option>
+          <option value="Completed">Completed Only</option>
+          <option value="Cancelled">Cancelled Only</option>
+          <option value="Pending">Pending Only</option>
+        </select>
+
+        <input type="search" id="searchInput" placeholder="Search ride ID or address..." aria-label="Search rides">
+
+        <button type="button" class="secondary" id="resetFiltersBtn">Reset Filters</button>
+        <button type="button" id="exportRidesBtn">Export Filtered CSV</button>
+      </div>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="responsive-cards">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Timestamp</th>
+                <th>State / City</th>
+                <th>Pickup Address</th>
+                <th>Drop-off Address</th>
+                <th class="money">Fare</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="rideBody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="rideCount">Showing 0 of 0 ride records.</span>
+          <div class="pagination no-print" id="paginationControls">
+            <button type="button" class="secondary" id="prevPageBtn">Previous</button>
+            <span id="pageIndicator" class="tabular">Page 1 of 1</span>
+            <button type="button" class="secondary" id="nextPageBtn">Next</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">5. Verification &amp; Re-engagement Action Queue</h2>
+          <p class="subtitle">Onboarding bottlenecks and trip cancellation breakdown.</p>
+        </div>
+      </div>
+
+      <div class="actions" id="actionNarrative"></div>
+
+      <div class="two-columns">
+        <div class="chart-card">
+          <h3 id="verificationChartTitle">Driver Verification Queue</h3>
+          <div id="verificationBars"></div>
+        </div>
+
+        <div class="chart-card">
+          <h3 id="cancellationChartTitle">Ride Cancellation Reasons</h3>
+          <div id="cancellationBars"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span id="footerReportMeta">XLDriv Limited · Fleet &amp; Operations Report · May 25 – November 18, 2026</span>
+      <span>Prepared for Management &amp; Investor Review</span>
+    </footer>
+  </div>
+
+  <!-- Authentication Modal (used when connected to backend API) -->
+  <div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+    <div class="modal">
+      <h2 id="authModalTitle">Sign in to XLDriv Ops</h2>
+      <p>Authenticate with your operations account to load live records and export audit CSVs.</p>
+      <div class="error-text" id="authError"></div>
+      <form id="authForm">
+        <div class="form-field">
+          <label for="authEmail">Work Email</label>
+          <input type="email" id="authEmail" required autocomplete="username" placeholder="ops@xldriv.com">
+        </div>
+        <div class="form-field">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" required autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+          <button type="button" class="secondary" id="authCancelBtn">Cancel</button>
+          <button type="submit">Sign In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      // Fallback snapshot data used ONLY when opened standalone (file://) or when backend is unreachable
+      const SNAPSHOT_DATA = {
+        meta: {
+          reportingPeriod: "May 25, 2026 – November 18, 2026",
+          cutoffDate: "November 18, 2026",
+          activeTargetRange: "221–246",
+          generatedAt: "2026-11-18T23:59:00Z"
+        },
+        regions: [
+          { region: "Lagos", total: 265, active: 86, inactive: 118, unverified: 61, completed: 520, cancelled: 710, gross: 3224000, subscription: 0 },
+          { region: "Abuja (FCT)", total: 175, active: 56, inactive: 80, unverified: 39, completed: 340, cancelled: 465, gross: 1972000, subscription: 0 },
+          { region: "Rivers State", total: 110, active: 34, inactive: 51, unverified: 25, completed: 205, cancelled: 268, gross: 656000, subscription: 0 },
+          { region: "Edo State", total: 78, active: 24, inactive: 35, unverified: 19, completed: 135, cancelled: 172, gross: 310500, subscription: 0 },
+          { region: "Owerri (Imo)", total: 68, active: 20, inactive: 31, unverified: 17, completed: 118, cancelled: 150, gross: 413000, subscription: 0 },
+          { region: "Kaduna", total: 60, active: 18, inactive: 27, unverified: 15, completed: 102, cancelled: 130, gross: 234600, subscription: 0 }
+        ],
+        verificationQueue: [
+          { label: "Driver's Licence", count: 94 },
+          { label: "Roadworthiness", count: 51 },
+          { label: "Profile Photos", count: 31 }
+        ],
+        cancellationReasons: [
+          { label: "Rider Wait Times", percent: 41 },
+          { label: "Fare Negotiation", percent: 38 },
+          { label: "Driver / No Match", percent: 21 }
+        ],
+        rides: [
+          { id: "#XLD-9041", timestamp: "2026-11-18 19:42", state: "Lagos", pickup: "14 Admiralty Way, Lekki Phase 1", dropoff: "Murtala Muhammed Airport (MM2), Ikeja", fare: 9500, status: "Cancelled (Rider)" },
+          { id: "#XLD-9042", timestamp: "2026-11-18 19:15", state: "Lagos", pickup: "KingFisher Africa, 1 Wole Olateju Cres", dropoff: "Allen Avenue Roundabout, Ikeja", fare: 4200, status: "Completed" },
+          { id: "#XLD-9043", timestamp: "2026-11-18 18:50", state: "Abuja (FCT)", pickup: "Plot 452 Adetokunbo Ademola Cres, Wuse 2", dropoff: "Nnamdi Azikiwe Intl Airport, Abuja", fare: 8000, status: "Cancelled (Timeout)" },
+          { id: "#XLD-9044", timestamp: "2026-11-18 18:22", state: "Abuja (FCT)", pickup: "12 Gana Street, Maitama", dropoff: "Jabi Lake Mall, Bala Sokoto Way", fare: 3500, status: "Completed" },
+          { id: "#XLD-9045", timestamp: "2026-11-18 17:48", state: "Rivers State", pickup: "18 Aba Road, Garrison, Port Harcourt", dropoff: "Peter Odili Road, Trans Amadi", fare: 3200, status: "Cancelled (No Match)" },
+          { id: "#XLD-9046", timestamp: "2026-11-18 17:10", state: "Rivers State", pickup: "5 Tombia Street, New GRA Phase 2, PH", dropoff: "Port Harcourt Mall, Azikiwe Road", fare: 2800, status: "Completed" },
+          { id: "#XLD-9047", timestamp: "2026-11-18 16:35", state: "Edo State", pickup: "44 Sapele Road, Ring Road, Benin City", dropoff: "Ugbowo Campus Gate (UNIBEN), Benin", fare: 2500, status: "Cancelled (Driver)" },
+          { id: "#XLD-9048", timestamp: "2026-11-18 16:04", state: "Edo State", pickup: "9 Airport Road, GRA, Benin City", dropoff: "Oba Market Road, Benin City", fare: 2000, status: "Completed" },
+          { id: "#XLD-9049", timestamp: "2026-11-18 15:29", state: "Owerri (Imo)", pickup: "22 Wetheral Road, Owerri Municipal", dropoff: "Imo Concorde Hotel, New Owerri", fare: 2200, status: "Cancelled (Rider)" },
+          { id: "#XLD-9050", timestamp: "2026-11-18 14:51", state: "Owerri (Imo)", pickup: "10 Douglas Road, Owerri", dropoff: "Sam Mbakwe Cargo Airport, Owerri", fare: 5500, status: "Completed" },
+          { id: "#XLD-9051", timestamp: "2026-11-18 14:12", state: "Kaduna", pickup: "31 Ahmadu Bello Way, Kaduna North", dropoff: "Barnawa Shopping Complex, Kaduna South", fare: 2400, status: "Cancelled (Timeout)" },
+          { id: "#XLD-9052", timestamp: "2026-11-18 13:38", state: "Kaduna", pickup: "8 Ali Akilu Road, Ungwan Sarki, Kaduna", dropoff: "Kawo Flyover Bus Terminal, Kaduna", fare: 2100, status: "Completed" }
+        ]
+      };
+
+      const state = {
+        mode: "snapshot", // "live" | "snapshot"
+        user: null,
+        meta: SNAPSHOT_DATA.meta,
+        regions: [],
+        verificationQueue: [],
+        cancellationReasons: [],
+        rides: [],
+        filteredRides: [],
+        page: 1,
+        pageSize: 8,
+        printing: false,
+        isLoading: false
+      };
+
+      // Formatting helpers
+      const fmt = (n) => Number(n || 0).toLocaleString("en-NG");
+      const money = (n) => "₦" + Number(n || 0).toLocaleString("en-NG", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      const pct = (part, total) => total > 0 ? ((part / total) * 100).toFixed(1) + "%" : "0.0%";
+
+      function formatSyncTimestamp(isoString) {
+        const parsed = isoString ? new Date(isoString) : new Date();
+        const date = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+        return `${date.toLocaleString("en-NG", { timeZone: "UTC" })} UTC`;
+      }
+
+      // Safe DOM cell builder (prevents XSS + provides mobile card labels)
+      function td(text, className, label) {
+        const cell = document.createElement("td");
+        if (className) cell.className = className;
+        if (label) cell.dataset.label = label;
+        cell.textContent = text;
+        return cell;
+      }
+
+      function tdStrong(text, className, label) {
+        const cell = document.createElement("td");
+        if (className) cell.className = className;
+        if (label) cell.dataset.label = label;
+        const strong = document.createElement("strong");
+        strong.textContent = text;
+        cell.appendChild(strong);
+        return cell;
+      }
+
+      function computeTotals(regions) {
+        return regions.reduce((acc, r) => ({
+          total: acc.total + Number(r.total || 0),
+          active: acc.active + Number(r.active || 0),
+          inactive: acc.inactive + Number(r.inactive || 0),
+          unverified: acc.unverified + Number(r.unverified || 0),
+          completed: acc.completed + Number(r.completed || 0),
+          cancelled: acc.cancelled + Number(r.cancelled || 0),
+          gross: acc.gross + Number(r.gross || 0),
+          subscription: acc.subscription + Number(r.subscription || 0)
+        }), { total: 0, active: 0, inactive: 0, unverified: 0, completed: 0, cancelled: 0, gross: 0, subscription: 0 });
+      }
+
+      function renderHeaderMeta() {
+        const regionNames = state.regions.map((r) => r.region);
+        const coverageText = regionNames.length > 0
+          ? regionNames.join(", ")
+          : "Lagos, Abuja (FCT), Rivers, Edo, Imo & Kaduna";
+        const period = state.meta.reportingPeriod || SNAPSHOT_DATA.meta.reportingPeriod;
+        const cutoff = state.meta.cutoffDate || SNAPSHOT_DATA.meta.cutoffDate;
+
+        document.getElementById("headerMeta").textContent =
+          `Reporting Period: ${period} · Coverage: ${coverageText}`;
+        document.getElementById("cutoffLabel").textContent =
+          `Reporting Cut-off: ${cutoff}`;
+        if (state.mode === "live" && state.meta.reportingPeriod) {
+          document.getElementById("footerReportMeta").textContent =
+            `XLDriv Limited · Fleet & Operations Report · ${state.meta.reportingPeriod}`;
+        }
+      }
+
+      function renderKPIs(totals) {
+        const totalRequests = totals.completed + totals.cancelled;
+        document.getElementById("kpiTotalDrivers").textContent = fmt(totals.total);
+        document.getElementById("kpiActiveDrivers").textContent = fmt(totals.active);
+        document.getElementById("kpiActiveDriversSub").textContent =
+          `${pct(totals.active, totals.total)} · Target: ${state.meta.activeTargetRange || "221–246"}`;
+
+        document.getElementById("kpiCompletedRides").textContent = fmt(totals.completed);
+        document.getElementById("kpiCompletedRidesSub").textContent =
+          `${pct(totals.completed, totalRequests)} completion rate`;
+
+        document.getElementById("kpiCancelledRides").textContent = fmt(totals.cancelled);
+        document.getElementById("kpiCancelledRidesSub").textContent =
+          `${pct(totals.cancelled, totalRequests)} cancellation rate`;
+      }
+
+      function renderFleetBreakdown(totals) {
+        const period = state.meta.reportingPeriod || SNAPSHOT_DATA.meta.reportingPeriod;
+        document.getElementById("fleetSubtitle").textContent = `Total registered drivers: ${fmt(totals.total)}`;
+        const body = document.getElementById("fleetBody");
+        const foot = document.getElementById("fleetFoot");
+        body.replaceChildren();
+        foot.replaceChildren();
+
+        const rows = [
+          {
+            label: "Active Drivers",
+            count: totals.active,
+            desc: `Online and accepting rides (${period})`
+          },
+          {
+            label: "Inactive Drivers",
+            count: totals.inactive,
+            desc: "Verified accounts with zero completed trips during the reporting window"
+          },
+          {
+            label: "Pending Verification",
+            count: totals.unverified,
+            desc: "Awaiting Nigerian driver's license, roadworthiness certificate, or ID approval"
+          }
+        ];
+
+        rows.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.appendChild(tdStrong(row.label, "", "Driver Category"));
+          tr.appendChild(td(fmt(row.count), "num", "Driver Count"));
+          tr.appendChild(td(pct(row.count, totals.total), "num", "Share of Fleet"));
+          tr.appendChild(td(row.desc, "", "Details"));
+          body.appendChild(tr);
+        });
+
+        const footTr = document.createElement("tr");
+        footTr.appendChild(td("Total Registered", "", "Category"));
+        footTr.appendChild(td(fmt(totals.total), "num", "Driver Count"));
+        footTr.appendChild(td(totals.total > 0 ? "100.0%" : "0.0%", "num", "Share of Fleet"));
+        footTr.appendChild(td(`Combined fleet across ${state.regions.length} regions`, "", "Details"));
+        foot.appendChild(footTr);
+      }
+
+      function renderRegions(totals) {
+        const body = document.getElementById("regionalBody");
+        const foot = document.getElementById("regionalFoot");
+        body.replaceChildren();
+        foot.replaceChildren();
+
+        state.regions.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.appendChild(tdStrong(r.region));
+          tr.appendChild(td(fmt(r.total), "num"));
+          tr.appendChild(td(fmt(r.active), "num"));
+          tr.appendChild(td(fmt(r.inactive), "num"));
+          tr.appendChild(td(fmt(r.unverified), "num"));
+          tr.appendChild(td(fmt(r.completed), "num"));
+          tr.appendChild(td(fmt(r.cancelled), "num"));
+          tr.appendChild(td(money(r.gross), "money"));
+          tr.appendChild(tdStrong(money(r.subscription), "money"));
+          body.appendChild(tr);
+        });
+
+        const footTr = document.createElement("tr");
+        footTr.appendChild(td("TOTAL"));
+        footTr.appendChild(td(fmt(totals.total), "num"));
+        footTr.appendChild(td(fmt(totals.active), "num"));
+        footTr.appendChild(td(fmt(totals.inactive), "num"));
+        footTr.appendChild(td(fmt(totals.unverified), "num"));
+        footTr.appendChild(td(fmt(totals.completed), "num"));
+        footTr.appendChild(td(fmt(totals.cancelled), "num"));
+        footTr.appendChild(td(money(totals.gross), "money"));
+        footTr.appendChild(td(money(totals.subscription), "money"));
+        foot.appendChild(footTr);
+
+        document.getElementById("subscriptionNoteAmount").textContent = money(totals.subscription);
+      }
+
+      function populateStateFilter() {
+        const select = document.getElementById("stateFilter");
+        const current = select.value;
+        select.replaceChildren();
+
+        const allOpt = document.createElement("option");
+        allOpt.value = "ALL";
+        allOpt.textContent = "All States / Regions";
+        select.appendChild(allOpt);
+
+        state.regions.forEach((r) => {
+          const opt = document.createElement("option");
+          opt.value = r.region;
+          opt.textContent = r.region;
+          select.appendChild(opt);
+        });
+
+        if ([...select.options].some((o) => o.value === current)) {
+          select.value = current;
+        }
+      }
+
+      function getFilteredRides() {
+        const stateVal = document.getElementById("stateFilter").value;
+        const statusVal = document.getElementById("statusFilter").value;
+        const searchVal = document.getElementById("searchInput").value.trim().toLowerCase();
+
+        return state.rides.filter((r) => {
+          const status = String(r.status || "");
+          const stateMatch = stateVal === "ALL" || r.state === stateVal;
+          const statusMatch = statusVal === "ALL" || status.startsWith(statusVal);
+          const searchMatch = !searchVal || [r.id, r.state, r.pickup, r.dropoff, status, r.timestamp]
+            .join(" ")
+            .toLowerCase()
+            .includes(searchVal);
+          return stateMatch && statusMatch && searchMatch;
+        });
+      }
+
+      function statusBadgeClass(statusText) {
+        const normalized = String(statusText || "");
+        if (normalized.startsWith("Completed")) return "completed";
+        if (normalized.startsWith("Pending")) return "pending";
+        return "cancelled";
+      }
+
+      function renderRides() {
+        state.filteredRides = getFilteredRides();
+        const total = state.filteredRides.length;
+        const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+        if (state.page > totalPages) state.page = totalPages;
+
+        const startIdx = state.printing ? 0 : (state.page - 1) * state.pageSize;
+        const pageRows = state.printing
+          ? state.filteredRides
+          : state.filteredRides.slice(startIdx, startIdx + state.pageSize);
+
+        const body = document.getElementById("rideBody");
+        body.replaceChildren();
+
+        if (pageRows.length === 0) {
+          const tr = document.createElement("tr");
+          const emptyTd = document.createElement("td");
+          emptyTd.colSpan = 7;
+          emptyTd.textContent = "No matching ride records found.";
+          tr.appendChild(emptyTd);
+          body.appendChild(tr);
+        } else {
+          pageRows.forEach((r) => {
+            const tr = document.createElement("tr");
+            const statusText = String(r.status || "Unknown");
+            tr.appendChild(tdStrong(r.id || "—", "tabular", "Request ID"));
+            tr.appendChild(td(r.timestamp || "—", "tabular", "Timestamp"));
+            tr.appendChild(td(r.state || "—", "", "State / City"));
+            tr.appendChild(td(r.pickup || "—", "", "Pickup"));
+            tr.appendChild(td(r.dropoff || "—", "", "Drop-off"));
+            tr.appendChild(td(money(r.fare), "money", "Fare"));
+
+            const statusTd = document.createElement("td");
+            statusTd.dataset.label = "Status";
+            const badge = document.createElement("span");
+            badge.className = `badge ${statusBadgeClass(statusText)}`;
+            badge.textContent = statusText;
+            statusTd.appendChild(badge);
+            tr.appendChild(statusTd);
+
+            body.appendChild(tr);
+          });
+        }
+
+        const showingStart = total === 0 ? 0 : startIdx + 1;
+        const showingEnd = state.printing ? total : Math.min(startIdx + state.pageSize, total);
+        document.getElementById("rideCount").textContent =
+          `Showing ${showingStart}–${showingEnd} of ${total} matching rides (${state.rides.length} total loaded).`;
+        document.getElementById("pageIndicator").textContent = `Page ${state.page} of ${totalPages}`;
+        document.getElementById("prevPageBtn").disabled = state.page <= 1;
+        document.getElementById("nextPageBtn").disabled = state.page >= totalPages;
+        document.getElementById("exportRidesBtn").disabled = total === 0;
+      }
+
+      function renderActionQueue(totals) {
+        const narrative = document.getElementById("actionNarrative");
+        narrative.replaceChildren();
+
+        const period = state.meta.reportingPeriod || SNAPSHOT_DATA.meta.reportingPeriod;
+        const totalRequests = totals.completed + totals.cancelled;
+        const verTotal = state.verificationQueue.reduce((s, item) => s + Number(item.count || 0), 0);
+
+        const p1 = document.createElement("p");
+        const s1 = document.createElement("strong");
+        s1.textContent = `${fmt(totals.unverified)} Unverified Drivers (${pct(totals.unverified, totals.total)}): `;
+        p1.appendChild(s1);
+        p1.appendChild(document.createTextNode(
+          state.verificationQueue.map((v) => `${fmt(v.count)} ${String(v.label || "").toLowerCase()}`).join(", ") + "."
+        ));
+
+        const p2 = document.createElement("p");
+        const s2 = document.createElement("strong");
+        s2.textContent = `${fmt(totals.inactive)} Inactive Drivers (${pct(totals.inactive, totals.total)}): `;
+        p2.appendChild(s2);
+        p2.appendChild(document.createTextNode(
+          `Verified accounts with zero trips during ${period}. Driver subscriptions remain suspended (${money(totals.subscription)} collected).`
+        ));
+
+        const p3 = document.createElement("p");
+        const s3 = document.createElement("strong");
+        s3.textContent = "Trip Cancellation Analysis: ";
+        p3.appendChild(s3);
+        p3.appendChild(document.createTextNode(
+          `Total ride requests reached ${fmt(totalRequests)}, with ${fmt(totals.cancelled)} cancelled (${pct(totals.cancelled, totalRequests)}) versus ${fmt(totals.completed)} completed (${pct(totals.completed, totalRequests)}).`
+        ));
+
+        narrative.append(p1, p2, p3);
+
+        // Verification Bars
+        document.getElementById("verificationChartTitle").textContent =
+          `Driver Verification Queue · ${fmt(verTotal)} Drivers`;
+        const verContainer = document.getElementById("verificationBars");
+        verContainer.replaceChildren();
+
+        state.verificationQueue.forEach((item) => {
+          const countVal = Number(item.count || 0);
+          const rawPct = verTotal > 0 ? (countVal / verTotal) * 100 : 0;
+          const clampedPct = Math.max(0, Math.min(100, rawPct));
+          const row = document.createElement("div");
+          row.className = "bar-row";
+
+          const label = document.createElement("span");
+          label.textContent = item.label || "—";
+
+          const track = document.createElement("div");
+          track.className = "track";
+          const fill = document.createElement("div");
+          fill.className = "fill";
+          fill.style.width = `${clampedPct.toFixed(1)}%`;
+          fill.style.minWidth = clampedPct > 0 ? "4px" : "0";
+          track.appendChild(fill);
+
+          const count = document.createElement("strong");
+          count.className = "tabular";
+          count.textContent = fmt(countVal);
+
+          row.append(label, track, count);
+          verContainer.appendChild(row);
+        });
+
+        // Cancellation Bars
+        document.getElementById("cancellationChartTitle").textContent =
+          `Ride Cancellation Reasons · ${fmt(totals.cancelled)} Rides`;
+        const cancelContainer = document.getElementById("cancellationBars");
+        cancelContainer.replaceChildren();
+
+        state.cancellationReasons.forEach((item) => {
+          const pctVal = Number(item.percent || 0);
+          const clampedPct = Math.max(0, Math.min(100, pctVal));
+          const row = document.createElement("div");
+          row.className = "bar-row";
+
+          const label = document.createElement("span");
+          label.textContent = item.label || "—";
+
+          const track = document.createElement("div");
+          track.className = "track";
+          const fill = document.createElement("div");
+          fill.className = "fill charcoal";
+          fill.style.width = `${clampedPct}%`;
+          fill.style.minWidth = clampedPct > 0 ? "4px" : "0";
+          track.appendChild(fill);
+
+          const val = document.createElement("strong");
+          val.className = "tabular";
+          val.textContent = `${pctVal}%`;
+
+          row.append(label, track, val);
+          cancelContainer.appendChild(row);
+        });
+      }
+
+      // CSV Formula Injection Protection (CWE-1236)
+      function sanitizeCsvCell(value) {
+        let str = String(value ?? "");
+        if (/^[\t\r]|^[ \t\r\n]*[=+\-@]/.test(str)) {
+          str = "'" + str;
+        }
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+
+      function saveCSV(filename, rows) {
+        const csv = rows.map((row) => row.map(sanitizeCsvCell).join(",")).join("\r\n");
+        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function exportRides() {
+        if (state.mode === "live" && state.user) {
+          const params = new URLSearchParams({
+            state: document.getElementById("stateFilter").value,
+            status: document.getElementById("statusFilter").value,
+            search: document.getElementById("searchInput").value.trim()
+          });
+          window.location.href = `/api/dashboard/rides/export?${params.toString()}`;
+          return;
+        }
+
+        const filtered = getFilteredRides();
+        if (filtered.length === 0) return;
+
+        const rows = [
+          ["Request ID", "Timestamp", "State", "Pickup", "Drop-off", "Fare NGN", "Status"],
+          ...filtered.map((r) => [r.id, r.timestamp || "", r.state, r.pickup, r.dropoff, r.fare, r.status])
+        ];
+        saveCSV("XLDriv-Ride-Records-Filtered.csv", rows);
+      }
+
+      function applyDashboardData(data) {
+        state.meta = data.meta || SNAPSHOT_DATA.meta;
+        state.regions = data.regions || [];
+        state.verificationQueue = data.verificationQueue || [];
+        state.cancellationReasons = data.cancellationReasons || [];
+        state.rides = data.rides || [];
+
+        const totals = computeTotals(state.regions);
+        renderHeaderMeta();
+        renderKPIs(totals);
+        renderFleetBreakdown(totals);
+        renderRegions(totals);
+        populateStateFilter();
+        renderRides();
+        renderActionQueue(totals);
+
+        document.getElementById("lastSynced").textContent =
+          `Last synced: ${formatSyncTimestamp(state.meta.generatedAt)}`;
+      }
+
+      function openAuthModal() {
+        const errEl = document.getElementById("authError");
+        errEl.textContent = "";
+        errEl.style.display = "none";
+        document.getElementById("authModal").classList.add("open");
+        document.getElementById("authEmail").focus();
+      }
+
+      function closeAuthModal() {
+        document.getElementById("authModal").classList.remove("open");
+      }
+
+      function updateConnectionUI() {
+        const authBtn = document.getElementById("authBtn");
+        const userBadge = document.getElementById("userBadge");
+        const refreshBtn = document.getElementById("refreshBtn");
+        const isFileProtocol = window.location.protocol === "file:";
+
+        refreshBtn.style.display = isFileProtocol ? "none" : "inline-flex";
+
+        if (state.mode === "live" && state.user) {
+          userBadge.style.display = "inline";
+          userBadge.textContent = `${state.user.email} (${state.user.role})`;
+          authBtn.style.display = "inline-flex";
+          authBtn.textContent = "Sign Out";
+        } else if (state.mode === "live") {
+          userBadge.style.display = "none";
+          authBtn.style.display = "inline-flex";
+          authBtn.textContent = "Sign In";
+        } else {
+          userBadge.style.display = "none";
+          authBtn.style.display = "none";
+        }
+      }
+
+      async function loadFromBackendOrFallback() {
+        if (state.isLoading) return;
+        state.isLoading = true;
+        const refreshBtn = document.getElementById("refreshBtn");
+        refreshBtn.disabled = true;
+
+        try {
+          if (window.location.protocol === "file:") {
+            state.mode = "snapshot";
+            updateConnectionUI();
+            applyDashboardData(SNAPSHOT_DATA);
+            return;
+          }
+
+          try {
+            const meRes = await fetch("/api/auth/me", { credentials: "same-origin" });
+            if (meRes.ok) {
+              const meData = await meRes.json();
+              if (meData && meData.user && meData.user.email) {
+                state.mode = "live";
+                state.user = meData.user;
+
+                const [summaryRes, ridesRes] = await Promise.all([
+                  fetch("/api/dashboard/summary", { credentials: "same-origin" }),
+                  fetch("/api/dashboard/rides?limit=100", { credentials: "same-origin" })
+                ]);
+
+                if (summaryRes.ok && ridesRes.ok) {
+                  const summary = await summaryRes.json();
+                  const ridesPayload = await ridesRes.json();
+                  applyDashboardData({
+                    meta: summary.meta,
+                    regions: summary.regions,
+                    verificationQueue: summary.verificationQueue,
+                    cancellationReasons: summary.cancellationReasons,
+                    rides: ridesPayload.rides
+                  });
+                  updateConnectionUI();
+                  return;
+                }
+              }
+            } else if (meRes.status === 401) {
+              state.mode = "live";
+              state.user = null;
+              updateConnectionUI();
+              openAuthModal();
+              return;
+            }
+          } catch (_) {
+            // Backend not running; fall back cleanly to local snapshot
+          }
+
+          state.mode = "snapshot";
+          state.user = null;
+          updateConnectionUI();
+          applyDashboardData(SNAPSHOT_DATA);
+        } finally {
+          state.isLoading = false;
+          refreshBtn.disabled = false;
+        }
+      }
+
+      // Event Bindings (no inline onclick)
+      document.getElementById("stateFilter").addEventListener("change", () => {
+        state.page = 1;
+        renderRides();
+      });
+      document.getElementById("statusFilter").addEventListener("change", () => {
+        state.page = 1;
+        renderRides();
+      });
+      document.getElementById("searchInput").addEventListener("input", () => {
+        state.page = 1;
+        renderRides();
+      });
+
+      document.getElementById("resetFiltersBtn").addEventListener("click", () => {
+        document.getElementById("stateFilter").value = "ALL";
+        document.getElementById("statusFilter").value = "ALL";
+        document.getElementById("searchInput").value = "";
+        state.page = 1;
+        renderRides();
+      });
+
+      document.getElementById("exportRidesBtn").addEventListener("click", exportRides);
+      document.getElementById("refreshBtn").addEventListener("click", loadFromBackendOrFallback);
+      document.getElementById("printBtn").addEventListener("click", () => window.print());
+
+      window.addEventListener("beforeprint", () => {
+        state.printing = true;
+        renderRides();
+      });
+      window.addEventListener("afterprint", () => {
+        state.printing = false;
+        renderRides();
+      });
+
+      document.getElementById("prevPageBtn").addEventListener("click", () => {
+        if (state.page > 1) {
+          state.page -= 1;
+          renderRides();
+        }
+      });
+
+      document.getElementById("nextPageBtn").addEventListener("click", () => {
+        const totalPages = Math.max(1, Math.ceil(state.filteredRides.length / state.pageSize));
+        if (state.page < totalPages) {
+          state.page += 1;
+          renderRides();
+        }
+      });
+
+      const authModal = document.getElementById("authModal");
+      const authForm = document.getElementById("authForm");
+
+      document.getElementById("authBtn").addEventListener("click", async () => {
+        if (state.user) {
+          try {
+            await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+          } catch (_) {
+            // Clear local session state even if network call fails
+          }
+          state.user = null;
+          updateConnectionUI();
+          openAuthModal();
+        } else {
+          openAuthModal();
+        }
+      });
+
+      document.getElementById("authCancelBtn").addEventListener("click", closeAuthModal);
+
+      authModal.addEventListener("click", (e) => {
+        if (e.target === authModal) {
+          closeAuthModal();
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && authModal.classList.contains("open")) {
+          closeAuthModal();
+        }
+      });
+
+      authForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const errEl = document.getElementById("authError");
+        const submitBtn = authForm.querySelector('button[type="submit"]');
+        errEl.style.display = "none";
+
+        const email = document.getElementById("authEmail").value.trim();
+        const password = document.getElementById("authPassword").value;
+
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ email, password })
+          });
+
+          if (!res.ok) {
+            const payload = await res.json().catch(() => ({}));
+            errEl.textContent = payload.error || "Invalid credentials.";
+            errEl.style.display = "block";
+            return;
+          }
+
+          document.getElementById("authPassword").value = "";
+          closeAuthModal();
+          await loadFromBackendOrFallback();
+        } catch {
+          errEl.textContent = "Unable to reach authentication server.";
+          errEl.style.display = "block";
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+
+      // Initialize
+      loadFromBackendOrFallback();
+    })();
+  </script>
+</body>
+</html>
